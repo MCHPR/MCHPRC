@@ -5,9 +5,7 @@ use std::convert::TryFrom;
 use self::glfw::WindowHint;
 
 pub struct Client {
-    config: config::Config,
-    window_x: u32,
-    window_y: u32,
+    config: config::Config
 }
 
 impl Client {
@@ -18,20 +16,8 @@ impl Client {
             .merge(config::File::with_name("Config"))
             .expect("Unable to load Config.toml");
 
-        let x = config
-            .get_int("window_x")
-            .expect("'window_x' unset in Config.toml");
-        let y = config
-            .get_int("window_y")
-            .expect("'window_y' unset in Config.toml");
-
-        let x = u32::try_from(x).expect("Invalid 'window_x' set");
-        let y = u32::try_from(y).expect("Invalid 'window_y' set");
-
         let mut client = Client {
-            config,
-            window_x: x,
-            window_y: y,
+            config
         };
 
         client.start_glfw();
@@ -40,20 +26,34 @@ impl Client {
     fn start_glfw(&mut self) {
         let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
+        let x = self.config
+            .get_int("window_x")
+            .expect("'window_x' unset in Config.toml");
+        let y = self.config
+            .get_int("window_y")
+            .expect("'window_y' unset in Config.toml");
+
+        let x = u32::try_from(x).expect("Invalid 'window_x' set");
+        let y = u32::try_from(y).expect("Invalid 'window_y' set");
+
         let title = format!(
             "{} - Version {}",
             env!("CARGO_PKG_NAME"),
             env!("CARGO_PKG_VERSION")
         );
 
+        glfw.window_hint(WindowHint::ContextVersion(2, 1));
+
         let (mut window, events) = glfw
             .create_window(
-                self.window_x,
-                self.window_y,
+                x,
+                y,
                 &title,
                 glfw::WindowMode::Windowed,
             )
             .expect("Failed to create GLFW window.");
+
+        glfw.make_context_current(Some(&window));
 
         window.set_key_polling(true);
         window.make_current();
