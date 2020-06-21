@@ -1,13 +1,34 @@
 extern crate glfw;
 
 use glfw::{Action, Context, Key};
+use std::convert::TryFrom;
 
 fn main() {
-    println!("Hello, world!");
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
+    let title = format!(
+        "{} - Version {}",
+        env!("CARGO_PKG_NAME"),
+        env!("CARGO_PKG_VERSION")
+    );
+
+    let mut config = config::Config::default();
+    config
+        .merge(config::File::with_name("Config"))
+        .expect("Unable to load Config.toml");
+
+    let x = config
+        .get_int("window_x")
+        .expect("'window_x' unset in Config.toml");
+    let y = config
+        .get_int("window_y")
+        .expect("'window_y' unset in Config.toml");
+
+    let x = u32::try_from(x).expect("Invalid 'window_x' set");
+    let y = u32::try_from(y).expect("Invalid 'window_y' set");
+
     let (mut window, events) = glfw
-        .create_window(300, 100, "Inb4 MCHPRC", glfw::WindowMode::Windowed)
+        .create_window(x, y, &title, glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window.");
 
     window.set_key_polling(true);
