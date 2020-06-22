@@ -1,11 +1,11 @@
-use crate::window::Window;
 use crate::render::Renderer;
+use crate::window::Window;
 use config::Config;
 
 pub struct Client {
     config: Config,
     window: Window,
-    renderer: Renderer
+    renderer: Renderer,
 }
 
 impl Client {
@@ -23,14 +23,12 @@ impl Client {
         let mut client = Client {
             config,
             window,
-            renderer
+            renderer,
         };
 
         while !client.window.glfw_window.should_close() {
-
             client.renderer.update();
             client.window.update();
-
         }
     }
 }

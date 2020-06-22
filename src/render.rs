@@ -1,8 +1,8 @@
-use std::ffi::CString;
-use std::{ptr, mem};
-use std::str::from_utf8;
-use std::os::raw::c_void;
 use gl::types::*;
+use std::ffi::CString;
+use std::os::raw::c_void;
+use std::str::from_utf8;
+use std::{mem, ptr};
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -22,7 +22,7 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
 
 pub struct Renderer {
     pub program: u32,
-    pub vao: u32
+    pub vao: u32,
 }
 
 impl Renderer {
@@ -36,7 +36,7 @@ impl Renderer {
 
             let mut success = gl::FALSE as GLint;
             let mut info_log = Vec::with_capacity(512);
-            info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
+            info_log.set_len(512 - 1);
             gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut success);
             if success != gl::TRUE as GLint {
                 gl::GetShaderInfoLog(
@@ -123,7 +123,7 @@ impl Renderer {
         };
         return Renderer {
             program: shader_program,
-            vao
+            vao,
         };
     }
 

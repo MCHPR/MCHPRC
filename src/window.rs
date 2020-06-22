@@ -1,6 +1,6 @@
-use glfw::{Context, WindowHint, Glfw, Key, Action};
-use std::convert::TryFrom;
 use config::Config;
+use glfw::{Action, Context, Glfw, Key, WindowHint};
+use std::convert::TryFrom;
 use std::sync::mpsc::Receiver;
 
 pub struct Window {
@@ -9,7 +9,7 @@ pub struct Window {
     pub title: String,
     pub glfw: Glfw,
     pub glfw_window: glfw::Window,
-    pub glfw_events: Receiver<(f64, glfw::WindowEvent)>
+    pub glfw_events: Receiver<(f64, glfw::WindowEvent)>,
 }
 
 impl Window {
@@ -52,7 +52,7 @@ impl Window {
             title,
             glfw,
             glfw_window: window,
-            glfw_events: events
+            glfw_events: events,
         };
     }
 
