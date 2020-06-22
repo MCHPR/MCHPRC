@@ -1,4 +1,6 @@
 mod client;
+mod render;
+mod window;
 
 use client::Client;
 

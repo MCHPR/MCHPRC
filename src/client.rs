@@ -1,11 +1,11 @@
-extern crate glfw;
-
-use glfw::{Action, Context, Key};
-use std::convert::TryFrom;
-use self::glfw::WindowHint;
+use crate::window::Window;
+use crate::render::Renderer;
+use config::Config;
 
 pub struct Client {
-    config: config::Config
+    config: Config,
+    window: Window,
+    renderer: Renderer
 }
 
 impl Client {
@@ -16,62 +16,21 @@ impl Client {
             .merge(config::File::with_name("Config"))
             .expect("Unable to load Config.toml");
 
+        let mut window = Window::init(&config);
+
+        let renderer = Renderer::init(&mut window.glfw_window);
+
         let mut client = Client {
-            config
+            config,
+            window,
+            renderer
         };
 
-        client.start_glfw();
-    }
+        while !client.window.glfw_window.should_close() {
 
-    fn start_glfw(&mut self) {
-        let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+            client.renderer.update();
+            client.window.update();
 
-        let x = self.config
-            .get_int("window_x")
-            .expect("'window_x' unset in Config.toml");
-        let y = self.config
-            .get_int("window_y")
-            .expect("'window_y' unset in Config.toml");
-
-        let x = u32::try_from(x).expect("Invalid 'window_x' set");
-        let y = u32::try_from(y).expect("Invalid 'window_y' set");
-
-        let title = format!(
-            "{} - Version {}",
-            env!("CARGO_PKG_NAME"),
-            env!("CARGO_PKG_VERSION")
-        );
-
-        glfw.window_hint(WindowHint::ContextVersion(2, 1));
-
-        let (mut window, events) = glfw
-            .create_window(
-                x,
-                y,
-                &title,
-                glfw::WindowMode::Windowed,
-            )
-            .expect("Failed to create GLFW window.");
-
-        glfw.make_context_current(Some(&window));
-
-        window.set_key_polling(true);
-        window.make_current();
-
-        while !window.should_close() {
-            glfw.poll_events();
-            for (_, event) in glfw::flush_messages(&events) {
-                self.handle_window_event(&mut window, event);
-            }
-        }
-    }
-
-    fn handle_window_event(&mut self, window: &mut glfw::Window, event: glfw::WindowEvent) {
-        match event {
-            glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                window.set_should_close(true)
-            }
-            _ => {}
         }
     }
 }
