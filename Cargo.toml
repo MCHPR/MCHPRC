@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 config = "0.10.1"
 gl = "0.14.0"
+nalgebra = "0.21"
 
 [dependencies.glfw]
 git = "https://github.com/bjz/glfw-rs.git"
