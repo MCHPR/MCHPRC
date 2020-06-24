@@ -54,8 +54,7 @@ impl Camera {
         let w = w as f32;
         let h = h as f32;
         // NAlgebra includes a perspective matrix tool, I love it.
-        self.projection = Matrix4::new_perspective( w / h,
-            vfov.to_radians(), 0.1, 4086.0);
+        self.projection = Matrix4::new_perspective(w / h, vfov.to_radians(), 0.1, 4086.0);
     }
 
     fn rebuild_world_space(&mut self) {
@@ -69,21 +68,26 @@ impl Camera {
         // must instead move everything else around the camera. For
         // instance if our camera moves right, everything appears to move
         // left.
-        let x_rot_mat = Matrix4::from_axis_angle(&Vector3::x_axis(), 
-            self.world_rotation[0].to_radians() * -1.0);
-        let y_rot_mat = Matrix4::from_axis_angle(&Vector3::y_axis(), 
-            self.world_rotation[1].to_radians() * -1.0);
-        let z_rot_mat = Matrix4::from_axis_angle(&Vector3::z_axis(), 
-            self.world_rotation[2].to_radians() * -1.0);
-        let trans_mat = Matrix4::new_translation(&(self.world_translate 
-            * -1.0));
-        
+        let x_rot_mat = Matrix4::from_axis_angle(
+            &Vector3::x_axis(),
+            self.world_rotation[0].to_radians() * -1.0,
+        );
+        let y_rot_mat = Matrix4::from_axis_angle(
+            &Vector3::y_axis(),
+            self.world_rotation[1].to_radians() * -1.0,
+        );
+        let z_rot_mat = Matrix4::from_axis_angle(
+            &Vector3::z_axis(),
+            self.world_rotation[2].to_radians() * -1.0,
+        );
+        let trans_mat = Matrix4::new_translation(&(self.world_translate * -1.0));
+
         self.world_space = Matrix4::identity();
         // Remember that while you can reach any rotation with euler
         // axes, the order that those rotations apply drastically affect
         // the final rotation.
-        
-        // As such it is important to first roll the camera (unlikely to 
+
+        // As such it is important to first roll the camera (unlikely to
         // be used,) then pitch the camera, then yaw the camera. These are
         // the z, x, and y axes respectively. This gives the expected
         // behavior for the camera.

@@ -1,5 +1,5 @@
 use config::Config;
-use glfw::{Action, Context, Glfw, Key, WindowHint};
+use glfw::{Action, Context, Glfw, Key, SwapInterval, WindowHint};
 use std::convert::TryFrom;
 use std::sync::mpsc::Receiver;
 
@@ -41,6 +41,8 @@ impl Window {
             .expect("Failed to create GLFW window.");
 
         glfw.make_context_current(Some(&window));
+        // Uncomment to disable VSync
+        //glfw.set_swap_interval(SwapInterval::None);
 
         window.set_framebuffer_size_polling(true);
         window.set_key_polling(true);

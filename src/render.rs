@@ -2,11 +2,12 @@ use gl::types::*;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::str::from_utf8;
+use std::time::{Duration, Instant, SystemTime};
 use std::{mem, ptr};
-use std::time::SystemTime;
 
-use nalgebra::{Matrix4, Vector3};
 use crate::render_camera::Camera;
+use nalgebra::{Matrix4, Vector3};
+use std::alloc::System;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -32,7 +33,9 @@ pub struct Renderer {
     pub vao: u32,
     pub transform_uniform: i32,
     pub camera: Camera,
-    pub frame_number: i32,
+    pub total_frames: i32,
+    pub frame_count: i32,
+    pub last_return: Instant,
 }
 
 impl Renderer {
@@ -99,7 +102,8 @@ impl Renderer {
 
             // Grab the uniforms from our shader program
             let c_str_transform_uniform = CString::new("transform").unwrap();
-            let transform_uniform = gl::GetUniformLocation(shader_program, c_str_transform_uniform.as_ptr());
+            let transform_uniform =
+                gl::GetUniformLocation(shader_program, c_str_transform_uniform.as_ptr());
 
             gl::DeleteShader(vertex_shader);
             gl::DeleteShader(fragment_shader);
@@ -141,14 +145,14 @@ impl Renderer {
         camera.build_frustum(1280, 720, 70.0);
         camera.set_translate(&Vector3::new(0.0, 0.0, 3.0));
 
-        let frame_number = 0;
-
         return Renderer {
             program: shader_program,
             vao,
             transform_uniform,
             camera,
-            frame_number,
+            total_frames: 0,
+            last_return: Instant::now(),
+            frame_count: 0,
         };
     }
 
@@ -158,23 +162,37 @@ impl Renderer {
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(self.program);
 
-            let frame_time = (self.frame_number as f32) / 60.0;
-            self.camera.set_translate(&Vector3::new((frame_time * 1.45).sin(), (frame_time * 1.356).sin(), 3.0 + (frame_time * 1.23).sin()));
-            self.camera.set_rotation(&Vector3::new((frame_time * 1.265).sin() * 10.0, (frame_time * 1.567).sin() * 10.0,0.0));
+            let frame_time = (self.total_frames as f32) / 60.0;
+            self.camera.set_translate(&Vector3::new(
+                (frame_time * 1.45).sin(),
+                (frame_time * 1.356).sin(),
+                3.0 + (frame_time * 1.23).sin(),
+            ));
+            self.camera.set_rotation(&Vector3::new(
+                (frame_time * 1.265).sin() * 10.0,
+                (frame_time * 1.567).sin() * 10.0,
+                0.0,
+            ));
 
             let matrix = self.camera.get_projection() * self.camera.get_world_space();
-            let matrix_data: [f32; 16] =[
-                matrix[0], matrix[1], matrix[2], matrix[3],
-                matrix[4], matrix[5], matrix[6], matrix[7],
-                matrix[8], matrix[9], matrix[10], matrix[11],
-                matrix[12], matrix[13], matrix[14], matrix[15]
-                ];
+            let matrix_data: [f32; 16] = [
+                matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6],
+                matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12], matrix[13],
+                matrix[14], matrix[15],
+            ];
             gl::UniformMatrix4fv(self.transform_uniform, 1, gl::FALSE, matrix_data.as_ptr());
-            
+
             gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
 
-            self.frame_number += 1;
+            if self.last_return.elapsed() >= Duration::from_secs(1) {
+                println!("FPS: {}", self.frame_count);
+                self.frame_count = 0;
+                self.last_return = Instant::now();
+            }
+
+            self.frame_count += 1;
+            self.total_frames += 1;
         }
     }
 }
