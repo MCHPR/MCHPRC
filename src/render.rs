@@ -3,12 +3,19 @@ use std::ffi::CString;
 use std::os::raw::c_void;
 use std::str::from_utf8;
 use std::{mem, ptr};
+use std::time::SystemTime;
+
+use nalgebra::{Matrix4, Vector3};
+use crate::render_camera::Camera;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
     layout (location = 0) in vec3 aPos;
+
+    uniform mat4 transform;
+
     void main() {
-       gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+       gl_Position = transform * vec4(aPos, 1.0);
     }
 "#;
 
@@ -23,12 +30,15 @@ const FRAGMENT_SHADER_SOURCE: &str = r#"
 pub struct Renderer {
     pub program: u32,
     pub vao: u32,
+    pub transform_uniform: i32,
+    pub camera: Camera,
+    pub frame_number: i32,
 }
 
 impl Renderer {
     pub fn init(window: &mut glfw::Window) -> Renderer {
         gl::load_with(|s| window.get_proc_address(s) as *const _);
-        let (shader_program, vao) = unsafe {
+        let (shader_program, vao, transform_uniform) = unsafe {
             let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
             let c_str_vert = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
             gl::ShaderSource(vertex_shader, 1, &c_str_vert.as_ptr(), ptr::null());
@@ -86,6 +96,11 @@ impl Renderer {
                     from_utf8(&info_log).unwrap()
                 );
             }
+
+            // Grab the uniforms from our shader program
+            let c_str_transform_uniform = CString::new("transform").unwrap();
+            let transform_uniform = gl::GetUniformLocation(shader_program, c_str_transform_uniform.as_ptr());
+
             gl::DeleteShader(vertex_shader);
             gl::DeleteShader(fragment_shader);
 
@@ -119,11 +134,21 @@ impl Renderer {
             gl::BindBuffer(gl::ARRAY_BUFFER, 0);
             gl::BindVertexArray(0);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
-            (shader_program, vao)
+            (shader_program, vao, transform_uniform)
         };
+
+        let mut camera = Camera::new();
+        camera.build_frustum(1280, 720, 70.0);
+        camera.set_translate(&Vector3::new(0.0, 0.0, 3.0));
+
+        let frame_number = 0;
+
         return Renderer {
             program: shader_program,
             vao,
+            transform_uniform,
+            camera,
+            frame_number,
         };
     }
 
@@ -132,8 +157,24 @@ impl Renderer {
             gl::ClearColor(0.2, 0.3, 0.3, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT);
             gl::UseProgram(self.program);
+
+            let frame_time = (self.frame_number as f32) / 60.0;
+            self.camera.set_translate(&Vector3::new((frame_time * 1.45).sin(), (frame_time * 1.356).sin(), 3.0 + (frame_time * 1.23).sin()));
+            self.camera.set_rotation(&Vector3::new((frame_time * 1.265).sin() * 10.0, (frame_time * 1.567).sin() * 10.0,0.0));
+
+            let matrix = self.camera.get_projection() * self.camera.get_world_space();
+            let matrix_data: [f32; 16] =[
+                matrix[0], matrix[1], matrix[2], matrix[3],
+                matrix[4], matrix[5], matrix[6], matrix[7],
+                matrix[8], matrix[9], matrix[10], matrix[11],
+                matrix[12], matrix[13], matrix[14], matrix[15]
+                ];
+            gl::UniformMatrix4fv(self.transform_uniform, 1, gl::FALSE, matrix_data.as_ptr());
+            
             gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
+
+            self.frame_number += 1;
         }
     }
 }
