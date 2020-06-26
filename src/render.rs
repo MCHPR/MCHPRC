@@ -141,9 +141,8 @@ impl Renderer {
             (shader_program, vao, transform_uniform)
         };
 
-        let mut camera = Camera::new();
-        camera.build_frustum(1280, 720, 70.0);
-        camera.set_translate(&Vector3::new(0.0, 0.0, 3.0));
+        let mut camera = Camera::new(1280.0 / 720.0, 70.0);
+        camera.set_translation(&Vector3::new(0.0, 0.0, -1.0));
 
         return Renderer {
             program: shader_program,
@@ -163,24 +162,32 @@ impl Renderer {
             gl::UseProgram(self.program);
 
             let frame_time = (self.total_frames as f32) / 60.0;
-            self.camera.set_translate(&Vector3::new(
-                (frame_time * 1.45).sin(),
-                (frame_time * 1.356).sin(),
-                3.0 + (frame_time * 1.23).sin(),
-            ));
+            //self.camera.set_translation(&Vector3::new(
+            //    (frame_time * 1.45).sin(),
+            //    (frame_time * 1.356).sin(),
+            //    -3.0 - (frame_time * 1.23).sin(),
+            //));
             self.camera.set_rotation(&Vector3::new(
                 (frame_time * 1.265).sin() * 10.0,
                 (frame_time * 1.567).sin() * 10.0,
                 0.0,
             ));
 
-            let matrix = self.camera.get_projection() * self.camera.get_world_space();
+
+            // To access all of the matricies in the camera we set our
+            // matrix to a clone of the first matrix, then multiply it
+            // by the subsequent matricies.
+            let mut matrix = self.camera.get_projection().clone_owned();
+            matrix *= self.camera.get_world_space();
+
             let matrix_data: [f32; 16] = [
-                matrix[0], matrix[1], matrix[2], matrix[3], matrix[4], matrix[5], matrix[6],
-                matrix[7], matrix[8], matrix[9], matrix[10], matrix[11], matrix[12], matrix[13],
-                matrix[14], matrix[15],
+                matrix[0], matrix[1], matrix[2], matrix[3], 
+                matrix[4], matrix[5], matrix[6], matrix[7], 
+                matrix[8], matrix[9], matrix[10], matrix[11], 
+                matrix[12], matrix[13], matrix[14], matrix[15],
             ];
-            gl::UniformMatrix4fv(self.transform_uniform, 1, gl::FALSE, matrix_data.as_ptr());
+            gl::UniformMatrix4fv(self.transform_uniform, 1, gl::FALSE, 
+                matrix_data.as_ptr());
 
             gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
