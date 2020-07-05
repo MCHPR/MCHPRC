@@ -1,5 +1,6 @@
 mod client;
 mod render;
+mod spatial;
 mod render_camera;
 mod window;
 

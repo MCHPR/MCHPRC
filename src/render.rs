@@ -142,7 +142,8 @@ impl Renderer {
         };
 
         let mut camera = Camera::new(1280.0 / 720.0, 70.0);
-        camera.set_translation(&Vector3::new(0.0, 0.0, -1.0));
+        camera.borrow_spatial_mut().set_translation(
+            &Vector3::new(0.0, 0.0, -3.0));
 
         return Renderer {
             program: shader_program,
@@ -162,23 +163,20 @@ impl Renderer {
             gl::UseProgram(self.program);
 
             let frame_time = (self.total_frames as f32) / 60.0;
-            //self.camera.set_translation(&Vector3::new(
-            //    (frame_time * 1.45).sin(),
-            //    (frame_time * 1.356).sin(),
-            //    -3.0 - (frame_time * 1.23).sin(),
-            //));
-            self.camera.set_rotation(&Vector3::new(
-                (frame_time * 1.265).sin() * 10.0,
-                (frame_time * 1.567).sin() * 10.0,
-                0.0,
-            ));
+
+            let mut matrix = self.camera.get_projection().clone_owned();
+            let camera_spatial = self.camera.borrow_spatial_mut();
+            camera_spatial.set_rotation(
+                &Vector3::new(
+                    (frame_time * 1.265).sin() * 10.0,
+                    (frame_time * 1.567).sin() * 10.0,
+                    0.0));
 
 
             // To access all of the matricies in the camera we set our
             // matrix to a clone of the first matrix, then multiply it
             // by the subsequent matricies.
-            let mut matrix = self.camera.get_projection().clone_owned();
-            matrix *= self.camera.get_world_space();
+            matrix *= camera_spatial.get_model_space_matrix();
 
             let matrix_data: [f32; 16] = [
                 matrix[0], matrix[1], matrix[2], matrix[3], 
