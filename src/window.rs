@@ -10,6 +10,18 @@ pub struct Window {
     pub glfw: Glfw,
     pub glfw_window: glfw::Window,
     pub glfw_events: Receiver<(f64, glfw::WindowEvent)>,
+    pub control_state: ControlState,
+}
+
+pub struct ControlState {
+    pub forward: bool,
+    pub back: bool,
+    pub left: bool,
+    pub right: bool,
+    pub up: bool,
+    pub down: bool,
+    pub pitch: f32,
+    pub yaw: f32,
 }
 
 impl Window {
@@ -48,6 +60,8 @@ impl Window {
         window.set_key_polling(true);
         window.make_current();
 
+        let control_state = ControlState::new();
+
         return Window {
             width: x,
             height: y,
@@ -55,12 +69,14 @@ impl Window {
             glfw,
             glfw_window: window,
             glfw_events: events,
+            control_state,
         };
     }
 
     pub fn update(&mut self) {
         self.glfw_window.swap_buffers();
         self.glfw.poll_events();
+
 
         let messages: Vec<_> = glfw::flush_messages(&self.glfw_events).collect();
 
@@ -74,7 +90,59 @@ impl Window {
             glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                 self.glfw_window.set_should_close(true);
             }
+            glfw::WindowEvent::Key(Key::W, _, Action::Press, _) => {
+                self.control_state.forward = true;
+            }
+            glfw::WindowEvent::Key(Key::W, _, Action::Release, _) => {
+                self.control_state.forward = false;
+            }
+            glfw::WindowEvent::Key(Key::S, _, Action::Press, _) => {
+                self.control_state.back = true;
+            }
+            glfw::WindowEvent::Key(Key::S, _, Action::Release, _) => {
+                self.control_state.back = false;
+            }
+            glfw::WindowEvent::Key(Key::A, _, Action::Press, _) => {
+                self.control_state.left = true;
+            }
+            glfw::WindowEvent::Key(Key::A, _, Action::Release, _) => {
+                self.control_state.left = false;
+            }
+            glfw::WindowEvent::Key(Key::D, _, Action::Press, _) => {
+                self.control_state.right = true;
+            }
+            glfw::WindowEvent::Key(Key::D, _, Action::Release, _) => {
+                self.control_state.right = false;
+            }
+            glfw::WindowEvent::Key(Key::Space, _, Action::Press, _) => {
+                self.control_state.up = true;
+            }
+            glfw::WindowEvent::Key(Key::Space, _, Action::Release, _) => {
+                self.control_state.up = false;
+            }
+            glfw::WindowEvent::Key(Key::LeftShift, _, Action::Press, _) => {
+                self.control_state.down = true;
+            }
+            glfw::WindowEvent::Key(Key::LeftShift, _, Action::Release, _) => {
+                self.control_state.down = false;
+            }
+
             _ => {}
+        }
+    }
+}
+
+impl ControlState {
+    fn new() -> ControlState {
+        ControlState {
+            forward: false,
+            back: false,
+            left: false,
+            right: false,
+            up: false,
+            down: false,
+            pitch: 0.0,
+            yaw: 0.0,
         }
     }
 }
