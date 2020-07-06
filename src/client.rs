@@ -1,8 +1,8 @@
-use nalgebra::Vector3;
+use crate::player::Player;
 use crate::render::Renderer;
 use crate::window::Window;
-use crate::player::Player;
 use config::Config;
+use nalgebra::Vector3;
 
 #[allow(dead_code)]
 pub struct Client {
@@ -58,12 +58,9 @@ impl Client {
             client.player.set_control_vector(&control_vector);
             client.player.update();
 
-            let mut camera_spatial = client.renderer.camera
-                .borrow_spatial_mut();
-            camera_spatial.set_translation(client.player.spatial
-                .get_translation());
-            camera_spatial.set_rotation(client.player.spatial
-                .get_rotation());
+            let camera_spatial = client.renderer.camera.borrow_spatial_mut();
+            camera_spatial.set_translation(client.player.spatial.get_translation());
+            camera_spatial.set_rotation(client.player.spatial.get_rotation());
 
             client.renderer.update();
             client.window.update();

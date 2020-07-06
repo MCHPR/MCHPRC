@@ -6,7 +6,6 @@ use std::time::{Duration, Instant};
 use std::{mem, ptr};
 
 use crate::render_camera::Camera;
-use nalgebra::Vector3;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -140,7 +139,7 @@ impl Renderer {
             (shader_program, vao, transform_uniform)
         };
 
-        let mut camera = Camera::new(1280.0 / 720.0, 70.0);
+        let camera = Camera::new(1280.0 / 720.0, 70.0);
 
         return Renderer {
             program: shader_program,
@@ -155,7 +154,7 @@ impl Renderer {
 
     pub fn update(&mut self) {
         unsafe {
-            let frame_time = (self.total_frames as f32) / 60.0;
+            //let frame_time = (self.total_frames as f32) / 60.0;
             // Update the camera, and then construct the world space
             // matrix.
             //self.camera.borrow_spatial_mut().set_rotation(
@@ -163,8 +162,7 @@ impl Renderer {
             //        (frame_time * 1.265).sin() * 10.0,
             //        (frame_time * 1.567).sin() * 10.0,
             //        0.0));
-            let mut world_space_matrix = self.camera.get_projection()
-                .clone_owned();
+            let mut world_space_matrix = self.camera.get_projection().clone_owned();
 
             let camera_model_space_matrix = self
                 .camera
