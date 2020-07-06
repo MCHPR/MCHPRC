@@ -141,9 +141,6 @@ impl Renderer {
         };
 
         let mut camera = Camera::new(1280.0 / 720.0, 70.0);
-        camera
-            .borrow_spatial_mut()
-            .set_translation(&Vector3::new(0.0, 0.0, 3.0));
 
         return Renderer {
             program: shader_program,
@@ -161,12 +158,13 @@ impl Renderer {
             let frame_time = (self.total_frames as f32) / 60.0;
             // Update the camera, and then construct the world space
             // matrix.
-            self.camera.borrow_spatial_mut().set_rotation(&Vector3::new(
-                (frame_time * 1.265).sin() * 10.0,
-                (frame_time * 1.567).sin() * 10.0,
-                0.0,
-            ));
-            let mut world_space_matrix = self.camera.get_projection().clone_owned();
+            //self.camera.borrow_spatial_mut().set_rotation(
+            //    &Vector3::new(
+            //        (frame_time * 1.265).sin() * 10.0,
+            //        (frame_time * 1.567).sin() * 10.0,
+            //        0.0));
+            let mut world_space_matrix = self.camera.get_projection()
+                .clone_owned();
 
             let camera_model_space_matrix = self
                 .camera
