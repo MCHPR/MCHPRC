@@ -143,7 +143,7 @@ impl Renderer {
 
         let mut camera = Camera::new(1280.0 / 720.0, 70.0);
         camera.borrow_spatial_mut().set_translation(
-            &Vector3::new(0.0, 0.0, -3.0));
+            &Vector3::new(0.0, 0.0, 3.0));
 
         return Renderer {
             program: shader_program,
@@ -158,34 +158,32 @@ impl Renderer {
 
     pub fn update(&mut self) {
         unsafe {
-            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-            gl::UseProgram(self.program);
-
             let frame_time = (self.total_frames as f32) / 60.0;
-
-            let mut matrix = self.camera.get_projection().clone_owned();
-            let camera_spatial = self.camera.borrow_spatial_mut();
-            camera_spatial.set_rotation(
+            // Update the camera, and then construct the world space
+            // matrix.
+            self.camera.borrow_spatial_mut().set_rotation(
                 &Vector3::new(
                     (frame_time * 1.265).sin() * 10.0,
                     (frame_time * 1.567).sin() * 10.0,
                     0.0));
+            let mut world_space_matrix = self.camera.get_projection()
+                .clone_owned();
 
+            let camera_model_space_matrix = self.camera.borrow_spatial_mut()
+                .get_model_space_matrix().try_inverse();
+            
+            if let Some(x) = camera_model_space_matrix {
+                world_space_matrix *= x;
+            }
 
-            // To access all of the matricies in the camera we set our
-            // matrix to a clone of the first matrix, then multiply it
-            // by the subsequent matricies.
-            matrix *= camera_spatial.get_model_space_matrix();
+            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT);
+            gl::UseProgram(self.program);
 
-            let matrix_data: [f32; 16] = [
-                matrix[0], matrix[1], matrix[2], matrix[3], 
-                matrix[4], matrix[5], matrix[6], matrix[7], 
-                matrix[8], matrix[9], matrix[10], matrix[11], 
-                matrix[12], matrix[13], matrix[14], matrix[15],
-            ];
+            let world_space_matrix_data = world_space_matrix.as_slice();
+            
             gl::UniformMatrix4fv(self.transform_uniform, 1, gl::FALSE, 
-                matrix_data.as_ptr());
+                world_space_matrix_data.as_ptr());
 
             gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);

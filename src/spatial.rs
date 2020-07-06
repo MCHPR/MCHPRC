@@ -37,13 +37,13 @@ impl Spatial {
 
             let matrix_x_axis = Matrix4::from_axis_angle( 
                 &Vector3::x_axis(), 
-                self.rotation[0].to_radians() * -1.0);
+                self.rotation[0].to_radians());
             let matrix_y_axis = Matrix4::from_axis_angle( 
                 &Vector3::y_axis(), 
-                self.rotation[1].to_radians() * -1.0);
+                self.rotation[1].to_radians());
             let matrix_z_axis = Matrix4::from_axis_angle( 
                 &Vector3::z_axis(), 
-                self.rotation[2].to_radians() * -1.0);
+                self.rotation[2].to_radians());
 
             let matrix_translation = Matrix4::new_translation(
                 &self.translation);
@@ -53,12 +53,17 @@ impl Spatial {
             // The order in which the euler rotations are applied to the
             // spatial is important. Here the order gives what would be
             // expected from an FPS style game for the players view.
-            self.model_space_matrix *= matrix_z_axis;
-            self.model_space_matrix *= matrix_x_axis;
-            self.model_space_matrix *= matrix_y_axis;
+            //
+            // Notably both OpenGL and NAlgebra use column major matrix
+            // notation. This means that the order we multiply our
+            // matricies by needs to be the opposite of the order we want
+            // the transformations applied.
 
-            // Apply the translation last.
+            // Since we want the translation last, multiply it first.
             self.model_space_matrix *= matrix_translation;
+            self.model_space_matrix *= matrix_y_axis;
+            self.model_space_matrix *= matrix_x_axis;
+            self.model_space_matrix *= matrix_z_axis;
 
             // The model space matrix is no longer in need of updating.
             self.model_space_matrix_dirty = false;
