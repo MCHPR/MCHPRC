@@ -1,5 +1,5 @@
 use crate::spatial::Spatial;
-use nalgebra::{Matrix4, Vector3};
+use nalgebra::Matrix4;
 
 pub struct Camera {
     spatial: Spatial,
@@ -22,6 +22,7 @@ impl Camera {
         }
     }
 
+    #[allow(dead_code)]
     pub fn borrow_spatial(&self) -> &Spatial {
         &self.spatial
     }
@@ -31,7 +32,7 @@ impl Camera {
     }
 
     pub fn get_projection(&mut self) -> &Matrix4<f32> {
-        if (self.mat_projection_dirty) {
+        if self.mat_projection_dirty {
             self.rebuild_projection_mat();
             self.mat_projection_dirty = false;
         }
@@ -39,7 +40,6 @@ impl Camera {
     }
 
     fn rebuild_projection_mat(&mut self) {
-        self.mat_projection = Matrix4::new_perspective(self.aspect_ratio, 
-            self.vfov, 0.1, 4096.0);
+        self.mat_projection = Matrix4::new_perspective(self.aspect_ratio, self.vfov, 0.1, 4096.0);
     }
 }

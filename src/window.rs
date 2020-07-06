@@ -22,13 +22,13 @@ impl Window {
 
         let x = config
             .get_int("window_x")
-            .expect("'window_x' unset in Config.toml");
+            .expect(unset_setting("window_x").as_ref());
         let y = config
             .get_int("window_y")
-            .expect("'window_y' unset in Config.toml");
+            .expect(unset_setting("window_y").as_ref());
 
-        let x = u32::try_from(x).expect("Invalid 'window_x' set");
-        let y = u32::try_from(y).expect("Invalid 'window_y' set");
+        let x = u32::try_from(x).expect(invalid_setting("window_x").as_ref());
+        let y = u32::try_from(y).expect(invalid_setting("window_y").as_ref());
 
         let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
 
@@ -41,8 +41,13 @@ impl Window {
             .expect("Failed to create GLFW window.");
 
         glfw.make_context_current(Some(&window));
-        // Uncomment to disable VSync
-        //glfw.set_swap_interval(SwapInterval::None);
+
+        if !config
+            .get_bool("vsync")
+            .expect(unset_setting("vsync").as_ref())
+        {
+            glfw.set_swap_interval(SwapInterval::None);
+        }
 
         window.set_framebuffer_size_polling(true);
         window.set_key_polling(true);
@@ -77,4 +82,11 @@ impl Window {
             _ => {}
         }
     }
+}
+
+pub fn invalid_setting(setting: &str) -> String {
+    format!("Invalid '{}' set in Config.toml", setting)
+}
+pub fn unset_setting(setting: &str) -> String {
+    format!("'{}' unset in Config.toml", setting)
 }

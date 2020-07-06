@@ -1,7 +1,7 @@
 mod client;
 mod render;
-mod spatial;
 mod render_camera;
+mod spatial;
 mod window;
 
 use client::Client;

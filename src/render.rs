@@ -2,12 +2,11 @@ use gl::types::*;
 use std::ffi::CString;
 use std::os::raw::c_void;
 use std::str::from_utf8;
-use std::time::{Duration, Instant, SystemTime};
+use std::time::{Duration, Instant};
 use std::{mem, ptr};
 
 use crate::render_camera::Camera;
-use nalgebra::{Matrix4, Vector3};
-use std::alloc::System;
+use nalgebra::Vector3;
 
 const VERTEX_SHADER_SOURCE: &str = r#"
     #version 330 core
@@ -142,8 +141,9 @@ impl Renderer {
         };
 
         let mut camera = Camera::new(1280.0 / 720.0, 70.0);
-        camera.borrow_spatial_mut().set_translation(
-            &Vector3::new(0.0, 0.0, 3.0));
+        camera
+            .borrow_spatial_mut()
+            .set_translation(&Vector3::new(0.0, 0.0, 3.0));
 
         return Renderer {
             program: shader_program,
@@ -161,17 +161,19 @@ impl Renderer {
             let frame_time = (self.total_frames as f32) / 60.0;
             // Update the camera, and then construct the world space
             // matrix.
-            self.camera.borrow_spatial_mut().set_rotation(
-                &Vector3::new(
-                    (frame_time * 1.265).sin() * 10.0,
-                    (frame_time * 1.567).sin() * 10.0,
-                    0.0));
-            let mut world_space_matrix = self.camera.get_projection()
-                .clone_owned();
+            self.camera.borrow_spatial_mut().set_rotation(&Vector3::new(
+                (frame_time * 1.265).sin() * 10.0,
+                (frame_time * 1.567).sin() * 10.0,
+                0.0,
+            ));
+            let mut world_space_matrix = self.camera.get_projection().clone_owned();
 
-            let camera_model_space_matrix = self.camera.borrow_spatial_mut()
-                .get_model_space_matrix().try_inverse();
-            
+            let camera_model_space_matrix = self
+                .camera
+                .borrow_spatial_mut()
+                .get_model_space_matrix()
+                .try_inverse();
+
             if let Some(x) = camera_model_space_matrix {
                 world_space_matrix *= x;
             }
@@ -181,9 +183,13 @@ impl Renderer {
             gl::UseProgram(self.program);
 
             let world_space_matrix_data = world_space_matrix.as_slice();
-            
-            gl::UniformMatrix4fv(self.transform_uniform, 1, gl::FALSE, 
-                world_space_matrix_data.as_ptr());
+
+            gl::UniformMatrix4fv(
+                self.transform_uniform,
+                1,
+                gl::FALSE,
+                world_space_matrix_data.as_ptr(),
+            );
 
             gl::BindVertexArray(self.vao);
             gl::DrawArrays(gl::TRIANGLES, 0, 3);
