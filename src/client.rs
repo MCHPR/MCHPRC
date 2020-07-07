@@ -56,6 +56,10 @@ impl Client {
             }
 
             client.player.set_control_vector(&control_vector);
+            client.player.set_control_heading(&Vector3::new(
+                client.window.control_state.pitch,
+                client.window.control_state.yaw,
+                0.0));
             client.player.update();
 
             let camera_spatial = client.renderer.camera.borrow_spatial_mut();

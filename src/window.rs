@@ -1,5 +1,5 @@
 use config::Config;
-use glfw::{Action, Context, Glfw, Key, SwapInterval, WindowHint};
+use glfw::{Action, Context, Glfw, Key, SwapInterval, WindowHint, CursorMode};
 use std::convert::TryFrom;
 use std::sync::mpsc::Receiver;
 
@@ -22,6 +22,8 @@ pub struct ControlState {
     pub down: bool,
     pub pitch: f32,
     pub yaw: f32,
+    pub last_cursor_x: f64,
+    pub last_cursor_y: f64,
 }
 
 impl Window {
@@ -64,6 +66,7 @@ impl Window {
         window.set_framebuffer_size_polling(true);
         window.set_key_polling(true);
         window.make_current();
+        window.set_cursor_mode(CursorMode::Disabled);
 
         let control_state = ControlState::new();
 
@@ -86,6 +89,37 @@ impl Window {
 
         for (_, event) in messages {
             self.handle_window_event(event);
+        }
+
+        // Update our control state based on mouse position.
+
+        // GLFW tracks the cursor position as a pair of doubles in an
+        // unbounded space while the cursor is disabled, we have to
+        // calculate the mouse movement deltas outselves.
+        let cursor_pos = self.glfw_window.get_cursor_pos();
+        let cursor_delta_x = cursor_pos.0 - self.control_state
+            .last_cursor_x;
+        self.control_state.last_cursor_x = cursor_pos.0;
+        let cursor_delta_y = cursor_pos.1 - self.control_state
+            .last_cursor_y;
+        self.control_state.last_cursor_y = cursor_pos.1;
+        
+        self.control_state.pitch -= (cursor_delta_y as f32) * 0.03;
+        self.control_state.yaw -= (cursor_delta_x as f32) * 0.03;
+
+        // Bound the pitch to 90 degrees in both directions.
+        if (self.control_state.pitch < -90.0) {
+            self.control_state.pitch = -90.0;
+        }
+        else if (self.control_state.pitch > 90.0) {
+            self.control_state.pitch = 90.0;
+        }
+
+        // Wrap the yaw to values between 0 and 360 degrees.
+        while (self.control_state.yaw < 0.0 || 
+                self.control_state.yaw > 360.0) {
+            self.control_state.yaw -= 360.0 
+                * self.control_state.yaw.signum();
         }
     }
 
@@ -154,6 +188,8 @@ impl ControlState {
             down: false,
             pitch: 0.0,
             yaw: 0.0,
+            last_cursor_x: 0.0,
+            last_cursor_y: 0.0,
         }
     }
 }

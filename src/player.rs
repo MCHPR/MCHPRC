@@ -26,8 +26,8 @@ impl Player {
     pub fn update(&mut self) {
         //Apply our control heading and vector
         self.velocity = self.control_vector.clone_owned();
-        self.velocity =
-            Rotation3::from_axis_angle(&Vector3::y_axis(), self.control_heading[1]) * self.velocity;
+        self.velocity = Rotation3::from_axis_angle(&Vector3::y_axis(), 
+            self.control_heading[1].to_radians()) * self.velocity;
         if self.velocity.magnitude() > 0.001 {
             self.velocity = self.velocity.normalize();
         }
@@ -35,6 +35,9 @@ impl Player {
         self.velocity *= 0.2;
 
         self.move_player(&self.velocity.clone_owned());
+
+        let rotation = self.control_heading.clone_owned();
+        self.borrow_spatial_mut().set_rotation(&rotation);
     }
 
     pub fn move_player(&mut self, vector: &Vector3<f32>) {
