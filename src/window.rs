@@ -108,16 +108,16 @@ impl Window {
         self.control_state.yaw -= (cursor_delta_x as f32) * 0.03;
 
         // Bound the pitch to 90 degrees in both directions.
-        if (self.control_state.pitch < -90.0) {
+        if self.control_state.pitch < -90.0 {
             self.control_state.pitch = -90.0;
         }
-        else if (self.control_state.pitch > 90.0) {
+        else if self.control_state.pitch > 90.0 {
             self.control_state.pitch = 90.0;
         }
 
         // Wrap the yaw to values between 0 and 360 degrees.
-        while (self.control_state.yaw < 0.0 || 
-                self.control_state.yaw > 360.0) {
+        while self.control_state.yaw < 0.0 || 
+                self.control_state.yaw > 360.0 {
             self.control_state.yaw -= 360.0 
                 * self.control_state.yaw.signum();
         }
